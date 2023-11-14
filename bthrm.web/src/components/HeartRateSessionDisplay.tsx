@@ -5,8 +5,11 @@ import HeartRateGraph from "./HeartRateGraph";
 import { listen } from "~/network/Socket";
 import ResponsePacketType from "~/network/ResponsePacketType";
 import type HeartRateReading from "~/models/HeartRateReading";
-import { minutes, timeDiff } from "~/utils/date";
+import { minutes, descriptiveTimeDiff, timeDiff, timeString } from "~/utils/date";
 import type User from "~/models/User";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faClock, faFire, faHeart, faStopwatch } from "@fortawesome/free-solid-svg-icons";
+import Section from "./Section";
 
 type HeartRateSessionProps = {
   session?: HeartRateSession;
@@ -30,9 +33,21 @@ export default function HeartRateSessionDisplay({ session, user }: HeartRateSess
     });
   }, [graphData]);
 
+  if (!session) {
+    return <></>
+  }
+
+  const startDate = new Date(session.startDate);
+  const endDate = session.endDate ? new Date(session.endDate) : new Date();
+
   const averageHeartRate = () => {
     if (!session?.readings?.length) return 0;
     return session.readings.filter(x => x != null).map(x => x.heartRate).reduce((p, c) => p + c, 0) / session.readings.length
+  }
+
+  const maxHeartRate = () => {
+    if (!session?.readings?.length) return 0;
+    return session.readings.filter(x => x != null).map(x => x.heartRate).reduce((p, c) => c > p ? c : p, 0)
   }
 
   const caloriesBurned = () => {
@@ -50,30 +65,35 @@ export default function HeartRateSessionDisplay({ session, user }: HeartRateSess
     return t * (.6309 * h + .1988 * w + .2017 * a - 55.0969) / 4.184;
   }
 
-  if (!session) {
-    return <></>
+  const dateRange = () => {
+    if (!session.endDate) return startDate.toLocaleDateString();
+    const isSingleDay = startDate.getDate() === endDate.getDate();
+    return isSingleDay ? new Date(session.startDate).toLocaleDateString() : `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
   }
 
-  return <div className="w-full m-3 p-3">
-    {session.startDate && <div>
-      Start: {new Date(session.startDate).toLocaleString()}
+
+
+  return <div className="w-full p-10 flex flex-col items-center">
+    {session.startDate && <div className="text-2xl">
+      {dateRange()}
     </div>}
-    {session.endDate && <div>
-      End: {new Date(session.endDate).toLocaleString()}
-    </div>}
-    <div>
-      Duration: {timeDiff(new Date(session.startDate), new Date(session.endDate ?? new Date()))}
+    <div className="text-xl">
+      {new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(startDate)}, {timeString(startDate)}
     </div>
-    <div className="flex flex-col items-center">
-      <HeartRateGraph data={graphData} />
+    <Section icon={faStopwatch} iconColor="text-green-700" name="" value={timeDiff(startDate, endDate)} />
+
+    <div className="grid grid-cols-2 justify-items-center w-full">
+      {!session.endDate && <Section icon={faHeart} iconColor="text-red-600" name="bpm" value={session?.readings[(session?.readings?.length ?? 1) - 1]?.heartRate ?? 0} />}
+      {!session.endDate && <div>{/*figure out what to put here...*/}</div>}
+      <Section icon={faHeart} iconColor="text-red-600" name="avg bpm" value={Math.round(averageHeartRate())} />
+      <Section icon={faHeart} iconColor="text-red-600" name="max bpm" value={maxHeartRate()} />
+
+      <Section icon={faFire} iconColor="text-orange-600" name="cals" value={Math.round(caloriesBurned())} />
+      <Section icon={faFire} iconColor="text-orange-600" name="cals" value={Math.round(caloriesBurned() / minutes(startDate, endDate) * 10) / 10} />
     </div>
 
-    {!session.endDate && <div>
-      BPM: {session.readings[session.readings.length - 1]?.heartRate} bpm
-    </div>}
-    <div>
-      Avg BPM: {Math.round(averageHeartRate())} bpm
+    <div className="flex flex-col items-center mt-10 w-full -ml-10">
+      <HeartRateGraph data={graphData} />
     </div>
-    <div>Calories burned: {Math.round(caloriesBurned())}</div>
   </div>
 }

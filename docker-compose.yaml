@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  db:
+    image: mysql:8.0.23
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci --skip-character-set-client-handshake --default-authentication-plugin=mysql_native_password
+    container_name: hrm-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+
+  web:
+    build:
+      context: .
+      dockerfile: ./docker/web/Dockerfile
+      args:
+        ENV_FILE: docker-local.env
+    container_name: hrm-web
+    env_file:
+      - bthrm.web/.env
+      - bthrm.web/docker-local.env
+    ports:
+      - "55300:8080"
+    depends_on:
+      - ws
+
+  ws:
+    build:
+      context: .
+      dockerfile: ./docker/ws/Dockerfile
+      args:
+        ENV_FILE: docker-local.env
+    container_name: hrm-ws
+    env_file:
+      - bthrm.server/.env
+      - bthrm.server/docker-local.env
+    ports:
+      - "5301:4001"

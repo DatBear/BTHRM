@@ -23,14 +23,14 @@ namespace bthrm
 
             var websocketConfig = configuration.GetSection("Websocket").Get<WebsocketConfig>();
 
-            await StartHeartRateMonitor(false);
-
             _websocket = new HeartRateWebsocket(websocketConfig!);
             await _websocket.Connect();
             await _websocket.Send(new SetUserRequest
             {
                 Data = 1
             });
+
+            await StartHeartRateMonitor(false);
 
             while (true)
             {
@@ -42,7 +42,8 @@ namespace bthrm
         {
             if (isFake)
             {
-                await Task.Run(FakeHeartRateThread);
+                Task.Run(FakeHeartRateThread);
+                return;
             }
 
             var device = new HeartRateMonitor("Polar");
@@ -56,16 +57,24 @@ namespace bthrm
         {
             while (true)
             {
-                FakeHeartRate += _r.Next(FakeHeartRate > 160 ? -2 : -1, FakeHeartRate < 140 ? 2 : 1);
-                await _websocket.Send(new AddHeartRateReadingRequest
+                FakeHeartRate += _r.Next(FakeHeartRate > 160 ? -2 : -1, FakeHeartRate < 140 ? 3 : 1);
+                if (_websocket != null)
                 {
-                    Data = new HeartRateReading
+                    await _websocket.Send(new AddHeartRateReadingRequest
                     {
-                        Date = DateTime.UtcNow,
-                        HeartRate = FakeHeartRate
-                    }
-                });
-
+                        Data = new HeartRateReading
+                        {
+                            Date = DateTime.UtcNow,
+                            HeartRate = FakeHeartRate
+                        }
+                    });
+                    Console.WriteLine($"Sent Fake Heart Rate: {FakeHeartRate}");
+                }
+                else
+                {
+                    Console.WriteLine("Websocket not connected");
+                }
+                
                 await Task.Delay(500);
             }
             

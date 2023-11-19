@@ -10,7 +10,15 @@ const socket = () => {
     _socket.onmessage = onMessage;
     _socket.onclose = onClose;
   }
-  return _socket;
+  return new Promise<WebSocket>((resolve, reject) => {
+    const onOpen = () => {
+      resolve(_socket);
+    }
+    _socket.onopen = onOpen;
+    if (_socket.readyState == _socket.OPEN) {
+      resolve(_socket);
+    }
+  });
 };
 
 const onMessage = (msg: MessageEvent<string>) => {
@@ -28,8 +36,8 @@ const onClose = (_: CloseEvent) => {
   window.location.href = window.location.protocol + '//' + window.location.host;
 }
 
-const send = <T>(type: RequestPacketType, data: T, log = false) => {
-  const s = socket();
+const send = async <T>(type: RequestPacketType, data: T, log = false) => {
+  const s = await socket();
   const str = JSON.stringify({ data, type });
   s.send(str);
   if (log) {

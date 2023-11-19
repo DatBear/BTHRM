@@ -13,9 +13,9 @@ export default function Home() {
   const [user, setUser] = useState<User>();
 
   useEffect(() => {
-    socket().onopen = () => {
-      send(RequestPacketType.SetUser, userId);
-    }
+    (async () => {
+      await send(RequestPacketType.SetUser, userId);
+    })();
   }, [userId]);
 
   useEffect(() => {

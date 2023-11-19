@@ -91,12 +91,14 @@ public class HeartRateRepository
     {
         if (userId == null) return null;
 
+        var now = DateTime.UtcNow;//mysql's now() is not the same as this for some reason, at least locally
+
         var session = await _db.QueryFirstOrDefaultAsync<HeartRateSession>($@"
             SELECT * FROM {TableNames.HeartRateSession} s
             WHERE s.UserId = @userId
-            AND NOW() >= s.StartDate
+            AND @now >= s.StartDate
             AND (s.EndDate IS NULL);
-        ", new { userId });
+        ", new { userId, now });
 
         return session;
     }

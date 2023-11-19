@@ -15,10 +15,10 @@ export default function Home() {
   const [session, setSession] = useState<HeartRateSession>();
 
   useEffect(() => {
-    socket().onopen = () => {
-      send(RequestPacketType.GetUser, userId);
-      send(RequestPacketType.GetSession, sessionId, true);
-    }
+    (async () => {
+      await send(RequestPacketType.GetUser, userId);
+      await send(RequestPacketType.GetSession, sessionId, true);
+    })();
   }, [sessionId, userId]);
 
   useEffect(() => {
@@ -48,18 +48,27 @@ export default function Home() {
     //send(RequestPacketType.StopSession, session.id);
   }
 
+  useEffect(() => {
+    return listen(ResponsePacketType.StopSession, (e: HeartRateSession) => {
+      var url = `/user/${userId}/session/${e.id}`;
+      location.href = url;
+    }, true);
+  }, [userId]);
+
 
   return <>
     <div className="border border-red-500 flex">
-      <HeartRateSessionDisplay session={session} user={user} />
+      <HeartRateSessionDisplay initialSession={session} user={user} />
     </div>
     <div className="flex flex-col gap-2 p-3">
-      Controls
-      <div className="flex flex-row gap-3">
-        {!session?.endDate && <button onClick={stopSession}>Stop</button>}
-        {!session?.isPaused && <button onClick={pauseSession}>Pause</button>}
-        {session?.isPaused && <button onClick={resumeSession}>Resume</button>}
-      </div>
+      {!session?.endDate && <>
+        Controls
+        <div className="flex flex-row gap-3">
+          <button onClick={stopSession}>Stop</button>
+          {!session?.isPaused && <button onClick={pauseSession}>Pause</button>}
+          {session?.isPaused && <button onClick={resumeSession}>Resume</button>}
+        </div>
+      </>}
     </div>
   </>
 }

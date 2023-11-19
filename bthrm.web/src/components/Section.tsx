@@ -12,7 +12,7 @@ type SectionProps = {
 export default function Section({ value, name, icon, iconColor }: SectionProps) {
   return <div className="flex flex-row items-center gap-4">
     <FontAwesomeIcon icon={icon} className={clsx(iconColor, 'text-3xl')} />
-    <div className="flex flex-col">
+    <div className="flex flex-col items-end">
       <div className="text-4xl">{value}</div>
       <div className="text-md">{name}</div>
     </div>

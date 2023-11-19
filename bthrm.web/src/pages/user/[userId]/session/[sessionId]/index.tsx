@@ -14,10 +14,10 @@ export default function Home() {
   const [session, setSession] = useState<HeartRateSession>();
 
   useEffect(() => {
-    socket().onopen = () => {
-      send(RequestPacketType.GetUser, userId);
-      send(RequestPacketType.GetSession, sessionId);
-    }
+    (async () => {
+      await send(RequestPacketType.GetUser, userId);
+      await send(RequestPacketType.GetSession, sessionId);
+    })();
   }, [sessionId, userId]);
 
   useEffect(() => {
@@ -34,6 +34,6 @@ export default function Home() {
 
 
   return <>
-    {user && session && <HeartRateSessionDisplay user={user} session={session} />}
+    {user && session && <HeartRateSessionDisplay user={user} initialSession={session} />}
   </>
 }

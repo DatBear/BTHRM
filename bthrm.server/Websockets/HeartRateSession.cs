@@ -42,6 +42,19 @@ public class HeartRateSession : WsSession
         base.OnDisconnected();
     }
 
+    public override void OnWsPing(byte[] buffer, long offset, long size)
+    {
+        //the base method doesn't handle exceptions here and crashes the server on pong fails...
+        try
+        {
+            base.OnWsPing(buffer, offset, size);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling OnWsPing {ex}");
+        }
+    }
+
     public override void OnWsReceived(byte[] buffer, long offset, long size)
     {
         var message = Encoding.UTF8.GetString(buffer, (int)offset, (int)size);
